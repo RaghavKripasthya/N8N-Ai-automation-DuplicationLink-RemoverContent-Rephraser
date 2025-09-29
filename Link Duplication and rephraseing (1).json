@@ -1,0 +1,572 @@
+{
+  "name": "Link Duplication and rephraseing",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "3a7fdd0d-ed6f-4dc3-915e-1e00ab1bf471",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -1540,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.reuters.com/markets/asia/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en;q=0.9"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate, br"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Upgrade-Insecure-Requests",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c476870e-3f64-48a4-8a31-39410f969ba6",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1320,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "extractionValues": {
+          "values": [
+            {
+              "key": "links",
+              "cssSelector": "header.header a",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5ff93cf0-6437-4635-a69f-2f3c73d888fc",
+      "name": "Extract Links",
+      "type": "n8n-nodes-base.htmlExtract",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const baseUrl = 'https://www.reuters.com';\nreturn $json.links.slice(0,5).map(link => ({ json: { url: baseUrl + link } }));"
+      },
+      "id": "e1408cba-47bb-4a49-b499-0dbf1e4140f7",
+      "name": "Prepare URL List",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -940,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Normalize URLs\nconst STRIP_HASH = true;\nfunction normalizeUrl(raw) {\n  if (!raw) return '';\n  try {\n    const u = new URL(raw.trim());\n    let pathname = u.pathname || '/';\n    if (pathname.length > 1 && pathname.endsWith('/')) pathname = pathname.slice(0,-1);\n    if (STRIP_HASH) u.hash = '';\n    return `${u.hostname.toLowerCase()}${pathname}`;\n  } catch {\n    return raw.trim().toLowerCase();\n  }\n}\n\nreturn items.map(item => {\n  const url = item.json.url;\n  return { json: { url, normalized_url: normalizeUrl(url) } };\n});"
+      },
+      "id": "e1c24eb1-ecef-449c-8d66-12c7c90f44b0",
+      "name": "Prepare URL List2",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MyJ3IhectjUKxajcu2-Rp2GcKKDSPOeTbMxPVnBbEZo",
+          "mode": "list",
+          "cachedResultName": "SeenLinks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MyJ3IhectjUKxajcu2-Rp2GcKKDSPOeTbMxPVnBbEZo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MyJ3IhectjUKxajcu2-Rp2GcKKDSPOeTbMxPVnBbEZo/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "a78ab044-0b8b-4433-835f-a10c408a250c",
+      "name": "Check in Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -600,
+        -40
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bRC431xvCYcWwbOv",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1MyJ3IhectjUKxajcu2-Rp2GcKKDSPOeTbMxPVnBbEZo",
+          "mode": "list",
+          "cachedResultName": "SeenLinks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MyJ3IhectjUKxajcu2-Rp2GcKKDSPOeTbMxPVnBbEZo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MyJ3IhectjUKxajcu2-Rp2GcKKDSPOeTbMxPVnBbEZo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "normalized_url": "={{ $json.normalized_url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "normalized_url",
+              "displayName": "normalized_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "original_url",
+              "displayName": "original_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d21af838-ccc6-452e-95f7-bc2af8bfb761",
+      "name": "Append New Link",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -280,
+        -40
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bRC431xvCYcWwbOv",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get existing links from Google Sheets (Correct node name: \"Check in Sheet\")\nconst sheetItems = $items(\"Check in Sheet\");\n\n// Get new links from URL generator (Correct node name: \"Prepare URL List2\")\nconst newItems = $items(\"Prepare URL List2\");\n\n// Extract list of existing normalized URLs\nconst existingUrls = sheetItems.map(item => item.json.normalized_url);\n\n// Filter only new links not already in the sheet\nconst freshLinks = newItems.filter(item => {\n  const newUrl = item.json.normalized_url;\n  return !existingUrls.includes(newUrl);\n});\n\n// Return new unique links\nreturn freshLinks;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -440,
+        -40
+      ],
+      "id": "5145ca14-bd81-4d11-857c-7ddba2cf1cbd",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.normalized_url }}",
+        "responseFormat": "string",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-US,en;q=0.9"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate, br"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Upgrade-Insecure-Requests",
+              "value": "1"
+            }
+          ]
+        }
+      },
+      "id": "2a1c7815-b860-44c9-995c-1df8edc1e054",
+      "name": "Fetch Article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "extractionValues": {
+          "values": [
+            {
+              "key": "heading",
+              "cssSelector": "h1"
+            },
+            {
+              "key": "body",
+              "cssSelector": "[data-testid^=\"paragraph\"]",
+              "returnArray": true
+            },
+            {
+              "key": "category5",
+              "cssSelector": "[class^=\"topic__header\"] h2 a"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ae990882-99d9-490e-8af5-bf3661525d35",
+      "name": "Extract Content",
+      "type": "n8n-nodes-base.htmlExtract",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Rephrase the following text without reducing its overall length. Preserve the original meaning and include all details. Improve clarity, structure, flow, and readability while keeping the tone concise, engaging, and professional. You may restructure the content into more paragraphs if it helps readability, but do not remove or summarize any information. The final result should be more than ten to fifteen paragraphs and suitable for a full article page.\n\nIn addition, generate:\n- A **unique, compelling main heading** (title) and\n- A **subheading** (1–2 sentences) that introduces or supports the article.\n\nAfter rephrasing, perform the following SEO enhancements:\n1. Extract the top 15 most relevant SEO keywords from the rephrased content (include a mix of short-tail, long-tail, and trending search phrases).\n2. Generate a list of 10–15 optimized hashtags derived from the keywords.\n3. Create a compelling **meta title** (under 60 characters) using the top keywords.\n4. Write an engaging **meta description** (under 160 characters) that summarizes the article and includes 2–3 keywords.\n\nReturn the final result in the following **strict JSON format**:\n\n{\n  \"heading\": \"....\",\n  \"subheading\": \"....\",\n  \"rephrased_article\": \"....\",\n  \"seo_keywords\": [\"keyword1\", \"keyword2\", \"...\"],\n  \"hashtags\": [\"#tag1\", \"#tag2\", \"...\"],\n  \"meta_title\": \"....\",\n  \"meta_description\": \"....\"\n}\n\nHere is the original content to rephrase and optimize:\n\n{{ $json.body }}\n",
+              "role": "system"
+            }
+          ]
+        },
+        "simplify": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        340,
+        -40
+      ],
+      "id": "dc14bdde-c9a1-4c33-ad7a-4b210237091c",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "i7QIFWCdg7Pa2zIa",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of items) {\n  const rawContent = item.json.choices?.[0]?.message?.content || '';\n\n  try {\n    const parsedData = JSON.parse(rawContent.trim());\n\n    results.push({\n      json: {\n        status: \"success\",\n        heading: parsedData.heading || '',\n        subheading: parsedData.subheading || '',\n        rephrased_article: parsedData.rephrased_article || '',\n        seo_keywords: parsedData.seo_keywords || [],\n        hashtags: parsedData.hashtags || [],\n        meta_title: parsedData.meta_title || '',\n        meta_description: parsedData.meta_description || ''\n      }\n    });\n\n  } catch (error) {\n    results.push({\n      json: {\n        status: \"error\",\n        error_message: \"Failed to parse JSON\",\n        rawContent\n      }\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        -40
+      ],
+      "id": "0428ecfe-198b-49ba-a7e6-ad571c642c94",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1MyJ3IhectjUKxajcu2-Rp2GcKKDSPOeTbMxPVnBbEZo",
+          "mode": "list",
+          "cachedResultName": "SeenLinks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MyJ3IhectjUKxajcu2-Rp2GcKKDSPOeTbMxPVnBbEZo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MyJ3IhectjUKxajcu2-Rp2GcKKDSPOeTbMxPVnBbEZo/edit#gid=0"
+        },
+        "startIndex": "={{ $json.start_row }}",
+        "numberToDelete": "={{ $json.message }}"
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -100,
+        200
+      ],
+      "id": "bf41f14f-be20-45e7-9294-0e5c1c032ba5",
+      "name": "Delete rows or columns from sheet",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "notesInFlow": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bRC431xvCYcWwbOv",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\ntoday.setHours(0, 0, 0, 0);\n\nconst yesterday = new Date(today);\nyesterday.setDate(today.getDate() - 1);\n\nlet startRow = null;\nlet endRow = null;\n\nfor (const item of items) {\n  const url = item.json.normalized_url;\n  const rowNumber = parseInt(item.json.row_number, 10);\n\n  if (!url || isNaN(rowNumber)) continue;\n\n  // Extract date from URL\n  const match = url.match(/\\d{4}-\\d{2}-\\d{2}/);\n  if (!match) continue;\n\n  const urlDate = new Date(match[0]);\n  urlDate.setHours(0, 0, 0, 0);\n\n  // ✅ Only mark for deletion if older than **yesterday**\n  if (urlDate < yesterday) {\n    if (startRow === null) startRow = rowNumber;\n    endRow = rowNumber-1;\n  }\n}\n\nif (startRow !== null && endRow !== null) {\n  return [{\n    json: {\n      start_row: startRow,\n      end_row: endRow,\n      message: `Delete from row ${startRow} to ${endRow}`\n    }\n  }];\n} else {\n  return [{\n    json: {\n      start_row: null ,\n      end_row: null,\n      message: \"Nothing to delete. Only today's and yesterday's links exist.\"\n    }\n  }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        200
+      ],
+      "id": "6e99190f-b5e0-455b-8612-7deae3e0fc2a",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        -40
+      ],
+      "id": "ce74e87f-8af8-401d-b09a-428bd179ba71",
+      "name": "Code3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Extract Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Links": {
+      "main": [
+        [
+          {
+            "node": "Prepare URL List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare URL List": {
+      "main": [
+        [
+          {
+            "node": "Prepare URL List2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare URL List2": {
+      "main": [
+        [
+          {
+            "node": "Check in Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check in Sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Append New Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append New Link": {
+      "main": [
+        [
+          {
+            "node": "Fetch Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Article": {
+      "main": [
+        [
+          {
+            "node": "Extract Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Content": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete rows or columns from sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Delete rows or columns from sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c2439bc8-e9db-4deb-b6b1-e769e20c0766",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "89cf534a92a52c056b31ca6b1a76c668eb4a10d25b14c3c9d6a0a4fd575da146"
+  },
+  "id": "a9lFpaSxicKM2vgX",
+  "tags": []
+}
